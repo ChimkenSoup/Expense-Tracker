@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In — Ledger</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div class="auth-wrapper">
+
+  <!-- Brand Panel -->
+  <div class="auth-brand">
+    <div class="brand-logo">
+      <div class="brand-icon">💰</div>
+      <span class="brand-name">Ledger</span>
+    </div>
+    <h1 class="brand-tagline">
+      Every rupee<br/>
+      <span>accounted for.</span>
+    </h1>
+    <p class="brand-desc">
+      Track your spending, understand your habits, and take control of your finances — all in one elegant dashboard.
+    </p>
+    <div class="brand-stats">
+      <div class="stat-item">
+        <div class="stat-num">∞</div>
+        <div class="stat-label">Expenses</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">3</div>
+        <div class="stat-label">Pay Modes</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">JWT</div>
+        <div class="stat-label">Secured</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Panel -->
+  <div class="auth-panel">
+    <div class="auth-card">
+      <h2>Welcome back</h2>
+      <p class="subtitle">Sign in to your account to continue</p>
+
+      <div class="alert alert-error" id="loginError"></div>
+
+      <div class="form-group">
+        <label>Email Address</label>
+        <div class="input-wrap">
+          <span class="icon">✉</span>
+          <input class="has-icon" type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrap">
+          <span class="icon">🔒</span>
+          <input class="has-icon" type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="loginBtn" onclick="handleLogin()">
+        Sign In
+      </button>
+
+      <div class="auth-footer">
+        Don't have an account? <a href="signup.html">Create one</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="app.js"></script>
+<script>
+  // Redirect if already logged in
+  if (localStorage.getItem('access_token')) {
+    window.location.href = 'dashboard.html';
+  }
+
+  async function handleLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const btn = document.getElementById('loginBtn');
+    const errEl = document.getElementById('loginError');
+
+    errEl.className = 'alert';
+
+    if (!email || !password) {
+      showAlert(errEl, 'Please enter your email and password.');
+      return;
+    }
+
+    btn.innerHTML = '<span class="loader"></span> Signing in…';
+    btn.disabled = true;
+
+    try {
+      // OAuth2PasswordRequestForm expects form-encoded data
+      const body = new URLSearchParams();
+      body.append('username', email);
+      body.append('password', password);
+
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString()
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showAlert(errEl, data.detail || 'Invalid credentials. Please try again.');
+        return;
+      }
+
+      localStorage.setItem('access_token', data.access_token);
+      showToast('Signed in successfully!', 'success');
+      setTimeout(() => window.location.href = 'dashboard.html', 600);
+
+    } catch (err) {
+      showAlert(errEl, 'Network error. Please try again.');
+    } finally {
+      btn.innerHTML = 'Sign In';
+      btn.disabled = false;
+    }
+  }
+
+  // Allow Enter key
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleLogin();
+  });
+</script>
+
+</body>
+</html>

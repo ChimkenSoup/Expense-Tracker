@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Ledger</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="brand-icon">💰</div>
+      <span class="brand-name">Ledger</span>
+    </div>
+
+    <nav class="nav-section">
+      <div class="nav-label">Menu</div>
+      <a class="nav-item active" href="#" onclick="showView('expenses')">
+        <span class="nav-icon">📊</span> Expenses
+      </a>
+      <a class="nav-item" href="#" onclick="showView('add')">
+        <span class="nav-icon">➕</span> Add Expense
+      </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="user-chip" id="userChip">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <div class="user-info">
+          <div class="user-name" id="userEmail">Loading…</div>
+          <div class="user-role">Personal Account</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:0.5rem" onclick="handleLogout()">
+        Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main class="main-content">
+
+    <!-- EXPENSES VIEW -->
+    <div id="viewExpenses">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">My Expenses</h1>
+          <p class="page-subtitle">Track and manage all your transactions</p>
+        </div>
+        <button class="btn btn-primary" style="width:auto" onclick="openModal('add')">
+          + Add Expense
+        </button>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card gold">
+          <div class="stat-card-label">Total Spent</div>
+          <div class="stat-card-value" id="statTotal">₹0</div>
+          <div class="stat-card-sub">All time</div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-card-label">This Month</div>
+          <div class="stat-card-value" id="statMonth">₹0</div>
+          <div class="stat-card-sub" id="statMonthLabel">—</div>
+        </div>
+        <div class="stat-card danger">
+          <div class="stat-card-label">Transactions</div>
+          <div class="stat-card-value" id="statCount">0</div>
+          <div class="stat-card-sub">Total entries</div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="section-card">
+        <div class="section-head">
+          <span class="section-title">All Transactions</span>
+          <div class="section-controls">
+            <div class="search-wrap">
+              <span class="icon">🔍</span>
+              <input class="search-input" id="searchInput" placeholder="Search description…" oninput="handleSearch()" />
+            </div>
+            <select class="search-input" id="limitSelect" onchange="loadExpenses()" style="width:90px;padding-left:0.75rem">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+        </div>
+        <div id="tableWrap">
+          <div class="empty-state">
+            <div class="empty-icon">⏳</div>
+            <p>Loading expenses…</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ── ADD / EDIT MODAL ── -->
+<div class="modal-overlay" id="expenseModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Add Expense</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <div class="alert alert-error" id="modalError"></div>
+
+    <div class="form-group">
+      <label>Amount (₹)</label>
+      <input type="number" id="fAmount" placeholder="e.g. 500" min="1" />
+    </div>
+
+    <div class="form-group">
+      <label>Description</label>
+      <input type="text" id="fDesc" placeholder="What was this for?" />
+    </div>
+
+    <div class="form-group">
+      <label>Payment Mode</label>
+      <select id="fMode">
+        <option value="">— Select mode —</option>
+        <option value="cash">Cash</option>
+        <option value="card">Card</option>
+        <option value="upi">UPI</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="modalSaveBtn" onclick="saveExpense()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── DELETE CONFIRM MODAL ── -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <span class="modal-title">Delete Expense?</span>
+      <button class="modal-close" onclick="closeDeleteModal()">✕</button>
+    </div>
+    <p style="color:var(--text-secondary);font-size:0.92rem">
+      This action cannot be undone. The expense will be permanently removed.
+    </p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn btn-danger" id="confirmDeleteBtn" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="app.js"></script>
+<script>
+  // ── Auth guard ──
+  const token = localStorage.getItem('access_token');
+  if (!token) window.location.href = 'login.html';
+
+  let editingId = null;
+  let deletingId = null;
+  let searchTimer = null;
+  let allExpenses = [];
+
+  // ── On load ──
+  window.addEventListener('DOMContentLoaded', async () => {
+    await loadUserInfo();
+    await loadExpenses();
+
+    const now = new Date();
+    document.getElementById('statMonthLabel').textContent =
+      now.toLocaleString('default', { month: 'long', year: 'numeric' });
+  });
+
+  async function loadUserInfo() {
+    // Decode JWT to get user id, then fetch user info
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const userId = payload.user_id;
+      const res = await apiFetch(`/users/${userId}`);
+      if (res.ok) {
+        const user = await res.json();
+        document.getElementById('userEmail').textContent = user.email;
+        document.getElementById('userAvatar').textContent = user.email[0].toUpperCase();
+      }
+    } catch (e) { /* silent */ }
+  }
+
+  async function loadExpenses() {
+    const limit  = document.getElementById('limitSelect').value;
+    const search = document.getElementById('searchInput').value.trim();
+    const params = new URLSearchParams({ Limit: limit });
+    if (search) params.append('search', search);
+
+    const res = await apiFetch(`/expenses/?${params}`);
+
+    if (!res.ok) {
+      if (res.status === 401) { handleLogout(); return; }
+      renderTable([]);
+      return;
+    }
+
+    allExpenses = await res.json();
+    renderTable(allExpenses);
+    updateStats(allExpenses);
+  }
+
+  function renderTable(expenses) {
+    const wrap = document.getElementById('tableWrap');
+
+    if (!expenses.length) {
+      wrap.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <p>No expenses found. Add your first one!</p>
+        </div>`;
+      return;
+    }
+
+    const rows = expenses.map(e => {
+      const mode = e.mode || 'other';
+      const date = new Date(e.created_at).toLocaleDateString('en-IN', {
+        day: 'numeric', month: 'short', year: 'numeric'
+      });
+      return `
+        <tr>
+          <td class="amount-cell">₹${e.expense.toLocaleString('en-IN')}</td>
+          <td>${e.description || '<span style="color:var(--text-muted)">—</span>'}</td>
+          <td><span class="mode-badge ${mode}">${mode}</span></td>
+          <td class="date-cell">${date}</td>
+          <td>
+            <div class="action-btns">
+              <button class="btn btn-ghost btn-icon btn-sm" title="Edit" onclick="openModal('edit', ${e.id})">✏️</button>
+              <button class="btn btn-danger btn-icon btn-sm" title="Delete" onclick="openDeleteModal(${e.id})">🗑</button>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+
+    wrap.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Amount</th>
+            <th>Description</th>
+            <th>Mode</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  function updateStats(expenses) {
+    const total = expenses.reduce((s, e) => s + e.expense, 0);
+    document.getElementById('statTotal').textContent = '₹' + total.toLocaleString('en-IN');
+    document.getElementById('statCount').textContent = expenses.length;
+
+    const now = new Date();
+    const monthTotal = expenses
+      .filter(e => {
+        const d = new Date(e.created_at);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      })
+      .reduce((s, e) => s + e.expense, 0);
+    document.getElementById('statMonth').textContent = '₹' + monthTotal.toLocaleString('en-IN');
+  }
+
+  // ── Search debounce ──
+  function handleSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(loadExpenses, 350);
+  }
+
+  // ── Modals ──
+  function openModal(mode, id = null) {
+    editingId = null;
+    document.getElementById('modalError').className = 'alert';
+    document.getElementById('fAmount').value = '';
+    document.getElementById('fDesc').value = '';
+    document.getElementById('fMode').value = '';
+
+    if (mode === 'edit' && id !== null) {
+      const exp = allExpenses.find(e => e.id === id);
+      if (!exp) return;
+      editingId = id;
+      document.getElementById('modalTitle').textContent = 'Edit Expense';
+      document.getElementById('modalSaveBtn').textContent = 'Update';
+      document.getElementById('fAmount').value = exp.expense;
+      document.getElementById('fDesc').value   = exp.description || '';
+      document.getElementById('fMode').value   = exp.mode || '';
+    } else {
+      document.getElementById('modalTitle').textContent = 'Add Expense';
+      document.getElementById('modalSaveBtn').textContent = 'Save';
+    }
+
+    document.getElementById('expenseModal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('expenseModal').classList.remove('open');
+    editingId = null;
+  }
+
+  function openDeleteModal(id) {
+    deletingId = id;
+    document.getElementById('deleteModal').classList.add('open');
+  }
+
+  function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('open');
+    deletingId = null;
+  }
+
+  async function saveExpense() {
+    const amount = parseInt(document.getElementById('fAmount').value);
+    const desc   = document.getElementById('fDesc').value.trim();
+    const mode   = document.getElementById('fMode').value;
+    const errEl  = document.getElementById('modalError');
+    const btn    = document.getElementById('modalSaveBtn');
+
+    errEl.className = 'alert';
+
+    if (!amount || amount < 1) {
+      showAlert(errEl, 'Please enter a valid amount.');
+      return;
+    }
+
+    const body = { expense: amount, description: desc || null, mode: mode || null };
+    btn.innerHTML = '<span class="loader"></span>';
+    btn.disabled = true;
+
+    try {
+      let res;
+      if (editingId !== null) {
+        res = await apiFetch(`/expenses/${editingId}`, { method: 'PUT', body: JSON.stringify(body) });
+      } else {
+        res = await apiFetch('/expenses/', { method: 'POST', body: JSON.stringify(body) });
+      }
+
+      if (!res.ok) {
+        const d = await res.json();
+        showAlert(errEl, d.detail || 'Failed to save expense.');
+        return;
+      }
+
+      closeModal();
+      showToast(editingId ? 'Expense updated!' : 'Expense added!', 'success');
+      await loadExpenses();
+
+    } catch {
+      showAlert(errEl, 'Network error. Please try again.');
+    } finally {
+      btn.innerHTML = editingId ? 'Update' : 'Save';
+      btn.disabled = false;
+    }
+  }
+
+  async function confirmDelete() {
+    if (deletingId === null) return;
+    const btn = document.getElementById('confirmDeleteBtn');
+    btn.innerHTML = '<span class="loader"></span>';
+    btn.disabled = true;
+
+    try {
+      const res = await apiFetch(`/expenses/${deletingId}`, { method: 'DELETE' });
+      if (res.ok || res.status === 204) {
+        closeDeleteModal();
+        showToast('Expense deleted.', 'success');
+        await loadExpenses();
+      } else {
+        closeDeleteModal();
+        showToast('Failed to delete.', 'error');
+      }
+    } catch {
+      showToast('Network error.', 'error');
+    } finally {
+      btn.innerHTML = 'Delete';
+      btn.disabled = false;
+    }
+  }
+
+  function handleLogout() {
+    localStorage.removeItem('access_token');
+    window.location.href = 'login.html';
+  }
+
+  function showView(v) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if (v === 'add') {
+      openModal('add');
+    } else {
+      document.querySelectorAll('.nav-item')[0].classList.add('active');
+    }
+  }
+</script>
+
+</body>
+</html>
