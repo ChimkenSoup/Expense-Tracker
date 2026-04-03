@@ -17,6 +17,7 @@ async def get_expenses(db: Session = Depends(get_db), current_user  : models.Use
         #.all() fires the query and returns the data
         return all_expenses
                     
+
 @router.get("/{id}", status_code = status.HTTP_200_OK, response_model = schemas.ExpenseResponse)
 async def get_expense_by_id(id: int , db : Session = Depends(get_db),current_user  : models.User  = Depends(oauth2.get_current_user)):
     expense_by_id = db.query(models.Expense).filter(models.Expense.id == id).first()

@@ -4,6 +4,7 @@ from app.database import engine
 from app.routers import users,expenses,auth
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from app.config import settings
 
 
 app = FastAPI()
