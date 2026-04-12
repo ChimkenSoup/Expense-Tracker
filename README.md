@@ -1,6 +1,6 @@
-# 💸 Expense Tracker API
+# 💸 Expense Tracker
 
-A **fully asynchronous** REST API for tracking personal expenses, built with **FastAPI**, **SQLAlchemy (async)**, and **PostgreSQL** (via Supabase).
+A **full-stack web application** for tracking personal expenses, built with **FastAPI**, **SQLAlchemy (async)**, **PostgreSQL**, and **HTML templates**. Features both REST API and web interface.
 
 ---
 
@@ -27,13 +27,17 @@ ExpenseTracker/
 │   │   ├── auth.py        # Login endpoint
 │   │   ├── users.py       # User registration & lookup
 │   │   └── expenses.py    # CRUD for expenses
+│   ├── templates/         # HTML templates
+│   │   ├── login.html     # Login page
+│   │   ├── signup.html    # Registration page
+│   │   └── dashboard.html # Main dashboard
+│   ├── static/            # Frontend HTML files
 │   ├── config.py          # Environment variable settings
 │   ├── database.py        # Async SQLAlchemy engine & session
 │   ├── models.py          # SQLAlchemy table models
 │   ├── oauth2.py          # JWT creation & verification
 │   ├── schemas.py         # Pydantic request/response schemas
-│   ├── utils.py           # Password hashing helpers
-│   └── static/            # Frontend HTML files
+│   └── utils.py           # Password hashing helpers
 ├── main.py                # App entrypoint, router registration
 ├── requirements.txt
 ├── .env                   # Your local secrets (never commit this)
@@ -93,9 +97,16 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 uvicorn main:app --reload
 ```
 
-The API will be available at: `http://127.0.0.1:8000`
+The app will be available at: `http://127.0.0.1:8000`
 
-Interactive docs: `http://127.0.0.1:8000/docs`
+**Web Interface:**
+- Home/Login: `http://127.0.0.1:8000/`
+- Dashboard: `http://127.0.0.1:8000/dashboard`
+- Signup: `http://127.0.0.1:8000/signup`
+
+**API Docs:**
+- Interactive docs: `http://127.0.0.1:8000/docs`
+- OpenAPI JSON: `http://127.0.0.1:8000/openapi.json`
 
 ---
 
@@ -144,3 +155,44 @@ Tables are created automatically on server startup via the `lifespan` handler in
 ```bash
 python -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
+
+---
+
+## Web Interface
+
+The application includes a complete web interface:
+
+| Route | Template | Description |
+| :--- | :--- | :--- |
+| `GET /` | `login.html` | Login page |
+| `GET /signup` | `signup.html` | User registration |
+| `GET /dashboard` | `dashboard.html` | Main expense dashboard |
+
+---
+
+## Deployment
+
+### Local Development
+```bash
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### Production (Render)
+1. Push code to GitHub
+2. Connect your repo on render.com
+3. Set environment variables in Render dashboard:
+   - `DATABASE_URL` (PostgreSQL connection string)
+   - `SECRET_KEY` (generate with command below)
+   - `ALGORITHM=HS256`
+   - `ACCESS_TOKEN_EXPIRE_MINUTES=30`
+4. Render will automatically detect and deploy your FastAPI app
+
+### Environment Variables
+All sensitive configuration is loaded from environment variables. No hardcoded defaults for security.
+
+---
+
+## Generating a Secret Key
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
