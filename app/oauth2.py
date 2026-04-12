@@ -62,10 +62,9 @@ async def get_current_user(token : str = Depends(oauth2_scheme), db : AsyncSessi
     # CHANGED: Using await db.execute(select().where()) instead of db.query().filter().first()
     # This is async and won't block other requests while waiting for DB response
     result = await db.execute(
-        select(models.User)
-        .where(models.User.id == token_data.id)
+        select(models.User).where(models.User.id == token_data.id)
     )
-    user = result.scalar_first()  # NEW: scalar_first() gets first result or None
+    user = result.scalar_one_or_none()  # NEW: scalar_one_or_none() gets first result or None
     # OLD: user = db.query(models.User).filter(models.User.id == token_data.id).first()
     # OLD: This blocked the entire worker thread while waiting for DB
 

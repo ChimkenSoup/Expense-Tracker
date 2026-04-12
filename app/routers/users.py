@@ -35,7 +35,7 @@ async def get_user(id : int, db : AsyncSession = Depends(get_db)):
         select(models.User)
         .where(models.User.id == id)
     )
-    user = result.scalar_first()  # NEW: scalar_first() gets first result or None
+    user = result.scalar_one_or_none()  # NEW: scalar_one_or_none() gets first result or None
     # OLD: user = db.query(models.User).filter(models.User.id == id).first()
     # OLD: This blocked the entire worker thread while waiting for DB
 

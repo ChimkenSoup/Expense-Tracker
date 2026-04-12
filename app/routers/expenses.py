@@ -40,19 +40,19 @@ async def get_expense_by_id(id: int , db : AsyncSession = Depends(get_db),curren
         select(models.Expense)
         .where(models.Expense.id == id)
     )
-    expense_by_id = result.scalar_first()  # NEW: scalar_first() gets first result or None
+    expense = result.scalar_one_or_none()  # NEW: scalar_one_or_none() gets first result or None
     # OLD: expense_by_id = db.query(models.Expense).filter(models.Expense.id == id).first()
     # OLD: This blocked the entire worker thread while waiting for DB
 
     #.first() gets the first one and returns a single model object
     #.all() returns a list of model objects
-    if not expense_by_id:
+    if not expense:
          raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'Expense with id = {id} not found')
 
-    if expense_by_id.owner_id != current_user.id:
+    if expense.owner_id != current_user.id:
          raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail = "Not authorized to perform requested action")
 
-    return expense_by_id
+    return expense
 
 
 
@@ -77,21 +77,21 @@ async def delete_expense(id : int , db : AsyncSession = Depends(get_db),current_
          select(models.Expense)
          .where(models.Expense.id == id)
      )
-     expense_result = result.scalar_first()
+     expense_to_delete = result.scalar_one_or_none()
      # OLD: expense_query = db.query(models.Expense).filter(models.Expense.id == id)
      # OLD: expense_result = expense_query.first()
      # OLD: This was synchronous and blocked the thread
 
      #.find() here will return the data to the api, so I cant delete it on the db,
      #without the .find() or .all() the query is still ongoing with the db on which I can act to delete the data
-     if not expense_result:
+     if not expense_to_delete:
           raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'Expense with id = {id} not found')
 
-     if expense_result.owner_id != current_user.id:
+     if expense_to_delete.owner_id != current_user.id:
           raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail = "Not authorized to perform requested action")
 
      # CHANGED: Using await db.delete() and await db.commit() instead of query.delete()
-     await db.delete(expense_result)  # ASYNC: marks for deletion
+     await db.delete(expense_to_delete)  # ASYNC: marks for deletion
      await db.commit()  # ASYNC: actually commits the deletion to DB
      # OLD: expense_query.delete(synchronize_session = False)
      # OLD: db.commit()
@@ -104,7 +104,7 @@ async def update_expense(id: int , expense : schemas.ExpenseCreate, db : AsyncSe
         select(models.Expense)
         .where(models.Expense.id == id)
     )
-    expense_result = result.scalar_first()
+    expense_result = result.scalar_one_or_none()
     # OLD: expense_query = db.query(models.Expense).filter(models.Expense.id == id)
     # OLD: expense_result = expense_query.first()
 

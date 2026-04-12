@@ -26,7 +26,7 @@ async def user_login(user_credentials : OAuth2PasswordRequestForm = Depends() , 
         select(models.User)
         .where(models.User.email == user_credentials.username)
     )
-    user = result.scalar_first()  # NEW: scalar_first() gets first result or None
+    user = result.scalar_one_or_none()  # Gets first result or None
     # OLD: user = db.query(models.User).filter(models.User.email == user_credentials.username).first()
     # OLD: This blocked the entire worker thread while waiting for DB
 

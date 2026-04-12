@@ -2,11 +2,16 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pathlib import Path
 
 class Settings(BaseSettings):
-    database_url : str
-    secret_key : str
-    algorithm : str
-    access_token_expire_minutes : int
+    database_url: str
+    secret_key: str
+    algorithm: str
+    access_token_expire_minutes: int
 
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
 
 settings = Settings()
