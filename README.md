@@ -1,64 +1,79 @@
-# 💸 Expense Tracker
+# Expense Tracker
 
-A **full-stack web application** for tracking personal expenses, built with **FastAPI**, **SQLAlchemy (async)**, **PostgreSQL**, and **HTML templates**. Features both REST API and web interface.
+A modern web application for personal expense management with secure authentication and comprehensive CRUD operations. Built with FastAPI and PostgreSQL for optimal performance and scalability.
 
----
+## Features
 
-## 🚀 Tech Stack
+- **Secure Authentication**: JWT-based login and registration system with secure password hashing
+- **Expense Management**: Full CRUD operations for creating, reading, updating, and deleting expenses
+- **Database Integration**: Asynchronous SQLAlchemy operations with PostgreSQL for efficient data handling
+- **Modular Architecture**: Clean separation of concerns with organized routers, schemas, models, and utilities
+- **Web Interface**: Responsive HTML templates with CSS and JavaScript for seamless user experience
 
-| Layer | Technology |
-| :--- | :--- |
-| Framework | FastAPI |
-| Database ORM | SQLAlchemy 2.0 (async) |
-| DB Driver | asyncpg |
-| Database | PostgreSQL (Supabase) |
-| Auth | JWT (python-jose) |
-| Password Hashing | passlib (bcrypt) |
-| Server | Uvicorn |
+## Tech Stack
 
----
+### Backend
+- **FastAPI** - Modern, fast web framework for building APIs
+- **SQLAlchemy** - SQL toolkit and ORM with async support
+- **PostgreSQL** - Powerful relational database
+- **JWT (python-jose)** - Secure token-based authentication
+- **Passlib** - Password hashing with bcrypt
 
-## 📁 Project Structure
+### Frontend
+- **HTML5** - Semantic markup
+- **CSS3** - Modern styling and responsive design
+- **JavaScript** - Interactive client-side functionality
+
+### Database
+- **PostgreSQL** - Primary data storage with ACID compliance
+
+## Project Structure
 
 ```
 ExpenseTracker/
-├── app/
-│   ├── routers/
-│   │   ├── auth.py        # Login endpoint
-│   │   ├── users.py       # User registration & lookup
-│   │   └── expenses.py    # CRUD for expenses
-│   ├── templates/         # HTML templates
-│   │   ├── login.html     # Login page
-│   │   ├── signup.html    # Registration page
-│   │   └── dashboard.html # Main dashboard
-│   ├── static/            # Frontend HTML files
-│   ├── config.py          # Environment variable settings
-│   ├── database.py        # Async SQLAlchemy engine & session
-│   ├── models.py          # SQLAlchemy table models
-│   ├── oauth2.py          # JWT creation & verification
-│   ├── schemas.py         # Pydantic request/response schemas
-│   └── utils.py           # Password hashing helpers
-├── main.py                # App entrypoint, router registration
-├── requirements.txt
-├── .env                   # Your local secrets (never commit this)
-└── .env.example           # Template for environment variables
+|-- app/
+|   |-- __init__.py
+|   |-- config.py           # Environment configuration
+|   |-- database.py         # Database connection and session management
+|   |-- main.py            # Application entry point
+|   |-- models.py          # SQLAlchemy database models
+|   |-- oauth2.py          # JWT token creation and validation
+|   |-- routers/
+|   |   |-- __init__.py
+|   |   |-- auth.py        # Authentication endpoints
+|   |   |-- expenses.py    # Expense CRUD operations
+|   |   |-- users.py       # User management
+|   |-- schemas.py         # Pydantic models for request/response
+|   |-- static/            # CSS, JavaScript, and static assets
+|   |-- templates/         # HTML templates
+|   |   |-- dashboard.html
+|   |   |-- login.html
+|   |   |-- signup.html
+|   |-- utils.py           # Password hashing utilities
+|-- .env.example           # Environment variables template
+|-- .gitignore            # Git ignore rules
+|-- main.py               # FastAPI application
+|-- requirements.txt      # Python dependencies
+`-- README.md
 ```
 
----
+## Installation & Setup
 
-## ⚙️ Setup
+### Prerequisites
+- Python 3.8+
+- PostgreSQL
+- Git
 
-### 1. Clone the repo & create a virtual environment
-
+### 1. Clone the Repository
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/ChimkenSoup/Expense-Tracker.git
 cd ExpenseTracker
-python -m venv env
 ```
 
-### 2. Activate the virtual environment
-
+### 2. Create Virtual Environment
 ```bash
+python -m venv env
+
 # Windows
 .\env\Scripts\activate
 
@@ -66,133 +81,77 @@ python -m venv env
 source env/bin/activate
 ```
 
-### 3. Install dependencies
-
+### 3. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure environment variables
-
-Copy the example env file and fill in your values:
-
+### 4. Configure Environment Variables
 ```bash
 cp .env.example .env
 ```
 
-Open `.env` and set:
-
+Edit `.env` with your configuration:
 ```env
-DATABASE_URL=postgresql+asyncpg://<user>:<password>@<host>:6543/postgres
-SECRET_KEY=<generate with: python -c "import secrets; print(secrets.token_urlsafe(32))">
+DATABASE_URL=postgresql+asyncpg://username:password@localhost:5432/expense_tracker
+SECRET_KEY=your_generated_secret_key_here
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 ```
 
-> **Note:** If using Supabase, use port `6543` (pooler) in your `DATABASE_URL`. The app is already configured to handle PgBouncer prepared statement limitations.
-
-### 5. Run the server
-
-```bash
-uvicorn main:app --reload
+### 5. Set Up Database
+Create a PostgreSQL database:
+```sql
+CREATE DATABASE expense_tracker;
 ```
 
-The app will be available at: `http://127.0.0.1:8000`
-
-**Web Interface:**
-- Home/Login: `http://127.0.0.1:8000/`
-- Dashboard: `http://127.0.0.1:8000/dashboard`
-- Signup: `http://127.0.0.1:8000/signup`
-
-**API Docs:**
-- Interactive docs: `http://127.0.0.1:8000/docs`
-- OpenAPI JSON: `http://127.0.0.1:8000/openapi.json`
-
----
-
-## 🔐 Authentication
-
-This API uses **JWT Bearer tokens**.
-
-1. **Register** → `POST /users/`
-2. **Login** → `POST /login` — returns an `access_token`
-3. **Use the token** → Add `Authorization: Bearer <token>` header to protected routes
-
----
-
-## 📬 API Endpoints
-
-### Auth
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `POST` | `/login` | Login and receive a JWT token |
-
-### Users
-| Method | Endpoint | Description | Auth |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/users/` | Register a new user | No |
-| `GET` | `/users/{id}` | Get user by ID | No |
-
-### Expenses
-| Method | Endpoint | Description | Auth |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/expenses/` | Get all your expenses | ✅ Required |
-| `POST` | `/expenses/` | Create a new expense | ✅ Required |
-| `GET` | `/expenses/{id}` | Get a specific expense | ✅ Required |
-| `PUT` | `/expenses/{id}` | Update an expense | ✅ Required |
-| `DELETE` | `/expenses/{id}` | Delete an expense | ✅ Required |
-
----
-
-## 🗄️ Database
-
-Tables are created automatically on server startup via the `lifespan` handler in `main.py`.
-
----
-
-## 🔑 Generating a Secret Key
-
-```bash
-python -c "import secrets; print(secrets.token_urlsafe(32))"
-```
-
----
-
-## Web Interface
-
-The application includes a complete web interface:
-
-| Route | Template | Description |
-| :--- | :--- | :--- |
-| `GET /` | `login.html` | Login page |
-| `GET /signup` | `signup.html` | User registration |
-| `GET /dashboard` | `dashboard.html` | Main expense dashboard |
-
----
-
-## Deployment
-
-### Local Development
+### 6. Run the Application
 ```bash
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Production (Render)
-1. Push code to GitHub
-2. Connect your repo on render.com
-3. Set environment variables in Render dashboard:
-   - `DATABASE_URL` (PostgreSQL connection string)
-   - `SECRET_KEY` (generate with command below)
-   - `ALGORITHM=HS256`
-   - `ACCESS_TOKEN_EXPIRE_MINUTES=30`
-4. Render will automatically detect and deploy your FastAPI app
+The application will be available at `http://127.0.0.1:8000`
 
-### Environment Variables
-All sensitive configuration is loaded from environment variables. No hardcoded defaults for security.
+## API Endpoints
+
+### Authentication
+- `POST /users/` - Register a new user
+- `POST /login` - Authenticate user and receive JWT token
+
+### Expenses
+- `GET /expenses/` - Retrieve all expenses for authenticated user
+- `POST /expenses/` - Create a new expense
+- `GET /expenses/{id}` - Retrieve a specific expense
+- `PUT /expenses/{id}` - Update an existing expense
+- `DELETE /expenses/{id}` - Delete an expense
+
+### Users
+- `GET /users/{id}` - Retrieve user information
+
+### Web Interface
+- `GET /` - Login page
+- `GET /signup` - Registration page
+- `GET /dashboard` - Main expense dashboard
+
+## Screenshots
+
+### Login Interface
+Clean and intuitive login form with secure authentication
+
+### Expense Dashboard
+Comprehensive overview of expenses with management capabilities
+
+## Future Improvements
+
+- **Data Visualization**: Add charts and graphs for expense analytics
+- **Export Functionality**: PDF and CSV export for expense reports
+- **Categories & Tags**: Enhanced expense categorization system
+- **Mobile Application**: React Native app for on-the-go expense tracking
+
+## Author
+
+Built with by [ChimkenSoup](https://github.com/ChimkenSoup)
 
 ---
 
-## Generating a Secret Key
-
-```bash
-python -c "import secrets; print(secrets.token_urlsafe(32))"
+**Note**: This project uses modern async/await patterns with SQLAlchemy 2.0 for optimal performance and scalability.
