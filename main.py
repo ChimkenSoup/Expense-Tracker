@@ -10,27 +10,21 @@ from app.routers import users,expenses,auth
 from app.config import settings
 import os
 
-#hi
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Run table creation on startup
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
 
-
 app = FastAPI(lifespan=lifespan)
 
-# Setup templates
 templates = Jinja2Templates(directory="app/templates")
 
 app.include_router(users.router)
 app.include_router(expenses.router)
 app.include_router(auth.router)
 
-# Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 @app.get("/", response_class=HTMLResponse)

@@ -10,7 +10,7 @@ class Expense(Base):
     mode = Column(String(50))
     created_at = Column(TIMESTAMP, nullable = False , server_default=text('CURRENT_TIMESTAMP'))
     owner_id = Column(Integer,ForeignKey("users.id",ondelete="CASCADE"), nullable=False)
-    
+
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index = True)

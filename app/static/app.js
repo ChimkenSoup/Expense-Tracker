@@ -1,9 +1,6 @@
-/**
- * app.js — Shared utilities for Ledger frontend
- * Handles: API requests (with auth), toasts, alerts
- */
 
-// ── Authenticated fetch ──
+
+
 async function apiFetch(url, options = {}) {
   const token = localStorage.getItem('access_token');
   const headers = {
@@ -14,13 +11,13 @@ async function apiFetch(url, options = {}) {
   return fetch(url, { ...options, headers });
 }
 
-// ── Show inline alert ──
+
 function showAlert(el, message, isSuccess = false) {
   el.textContent = message;
   el.className = 'alert show ' + (isSuccess ? 'alert-success' : 'alert-error');
 }
 
-// ── Toast notifications ──
+
 function showToast(message, type = 'success') {
   const container = document.getElementById('toastContainer');
   if (!container) return;
