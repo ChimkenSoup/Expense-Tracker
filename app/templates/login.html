@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sign In — Ledger</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
 
@@ -68,7 +68,7 @@
       </button>
 
       <div class="auth-footer">
-        Don't have an account? <a href="signup.html">Create one</a>
+        Don't have an account? <a href="/signup">Create one</a>
       </div>
     </div>
   </div>
@@ -77,11 +77,11 @@
 
 <div class="toast-container" id="toastContainer"></div>
 
-<script src="app.js"></script>
+<script src="/static/app.js"></script>
 <script>
   // Redirect if already logged in
   if (localStorage.getItem('access_token')) {
-    window.location.href = 'dashboard.html';
+    window.location.href = '/dashboard';
   }
 
   async function handleLogin() {
@@ -121,7 +121,7 @@
 
       localStorage.setItem('access_token', data.access_token);
       showToast('Signed in successfully!', 'success');
-      setTimeout(() => window.location.href = 'dashboard.html', 600);
+      setTimeout(() => window.location.href = '/dashboard', 600);
 
     } catch (err) {
       showAlert(errEl, 'Network error. Please try again.');
