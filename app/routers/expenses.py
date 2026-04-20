@@ -16,18 +16,14 @@ router = APIRouter(
 # CHANGED: db parameter type from Session to AsyncSession
 @router.get("/",status_code=status.HTTP_200_OK, response_model=List[schemas.ExpenseResponse])
 async def get_expenses(db: AsyncSession = Depends(get_db), current_user  : models.User  = Depends(oauth2.get_current_user),Limit : int = 10, search : Optional[str] = ""):
-    # CHANGED: Instead of db.query().filter().limit().all() (synchronous, blocking)
-    # We now use await db.execute(select(...)) which is non-blocking
-    # Other threads can handle requests while waiting for DB
+    
     result = await db.execute(
         select(models.Expense)
         .where(models.Expense.owner_id == current_user.id)
         .where(models.Expense.description.contains(search))
         .limit(Limit)
     )
-    all_expenses = result.scalars().all()  # .scalars() extracts the model objects from the result
-    #db.query(models.Expense) translates to the query and is connected to the db
-    #.all() fires the query and returns the data
+    all_expenses = result.scalars().all()  
     return all_expenses
 
 
